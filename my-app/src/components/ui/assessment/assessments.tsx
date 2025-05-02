@@ -421,6 +421,16 @@ export default function Assessments() {
             .map(([trait]) => trait)
     }, [calculateTraits])
     
+    // Get ranked traits (sorted by count in descending order)
+    const getRankedTraits = useCallback(() => {
+        const traitCounts = calculateTraits()
+        
+        // Sort traits by count in descending order
+        return Object.entries(traitCounts)
+            .sort((a, b) => b[1] - a[1])
+            .map(([trait, count]) => ({ trait, count }))
+    }, [calculateTraits])
+    
     const handleOptionSelect = useCallback((option: string) => {
         console.log(`Selected option: ${option} for question ${currentQuestion.id}`)
         setAnswers(prev => ({
@@ -474,9 +484,11 @@ export default function Assessments() {
         // Calculate trait counts and dominant traits
         const traitCounts = calculateTraits()
         const dominantTraits = getDominantTraits()
+        const rankedTraits = getRankedTraits()
         
         console.log("Trait counts:", traitCounts)
         console.log("Dominant traits:", dominantTraits)
+        console.log("Ranked traits:", rankedTraits)
         
         setIsSubmitting(true)
         setErrorMessage("")
@@ -491,14 +503,15 @@ export default function Assessments() {
                     selectedTrait: q.trait[q.options.findIndex(opt => opt === answers[q.id])]
                 })),
                 traitCounts,
-                dominantTraits
+                dominantTraits,
+                rankedTraits
             }
             
             console.log("Formatted results:", formattedResults)
             console.log("Calling assessmentDone server action...")
             
-            // Call server action to mark assessment as done and pass dominant traits
-            const result = await assessmentDone(dominantTraits)
+            // Call server action to mark assessment as done and pass ranked traits
+            const result = await assessmentDone(dominantTraits, rankedTraits)
             console.log("Server action result:", result)
             
             // If result is a string, it's an error message from the server action
@@ -543,7 +556,7 @@ export default function Assessments() {
         } finally {
             console.log("Submission process completed")
         }
-    }, [answers, currentQuestion.id, calculateTraits, getDominantTraits])
+    }, [answers, currentQuestion.id, calculateTraits, getDominantTraits, getRankedTraits])
     
     const progress = useMemo(() => {
         return `Question ${currentQuestionIndex + 1} of ${questions.length}`

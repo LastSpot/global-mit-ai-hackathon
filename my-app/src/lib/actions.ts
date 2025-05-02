@@ -8,6 +8,12 @@ import {
   createAdminClient 
 } from '@/utils/supabase/server'
 
+// Define a type for the trait ranking
+type RankedTrait = {
+  trait: string;
+  count: number;
+};
+
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
@@ -125,7 +131,7 @@ export async function deleteProfile() {
   redirect('/')
 }
 
-export async function assessmentDone(dominantTraits: string[] = []) {
+export async function assessmentDone(dominantTraits: string[] = [], rankedTraits: RankedTrait[] = []) {
   const supabase = await createClient()
   
   // First verify the user is authenticated with getUser()
@@ -142,12 +148,14 @@ export async function assessmentDone(dominantTraits: string[] = []) {
   }
 
   console.log("Updating user with dominant traits:", dominantTraits)
+  console.log("Updating user with ranked traits:", rankedTraits)
   
   // Now update the user metadata
   const { error: updateError } = await supabase.auth.updateUser({
     data: { 
       assessment_done: true,
       dominant_traits: dominantTraits,
+      ranked_traits: rankedTraits,
     },
   })
   
