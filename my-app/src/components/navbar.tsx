@@ -10,7 +10,7 @@ import {
   // NavigationMenuViewport,
 } from "@/components/ui/navigation-menu"
 import Link from "next/link"
-import Logo from "@/components/ui/backflow-logo";
+import Logo from "@/components/ui/logo";
 import { ModeToggle } from "@/components/ui/mode-toggle"
 import { InteractiveHoverButton } from "@/components/magicui/interactive-hover-button"
 import { ShimmerButton } from "@/components/magicui/shimmer-button";

@@ -36,7 +36,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 const data = {
   navMain: [
     {
-      title: "Whiteboard",
+      title: "Dashboard",
       url: "/dashboard",
       icon: SquareTerminal,
       isActive: true,
@@ -182,7 +182,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <Command className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">Backflow</span>
+                  <span className="truncate font-medium">App Name</span>
                   <span className="truncate text-xs">Personal</span>
                 </div>
               </a>
