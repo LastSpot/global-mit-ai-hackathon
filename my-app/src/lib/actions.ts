@@ -3,7 +3,10 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
+import { 
+  createClient, 
+  createAdminClient 
+} from '@/utils/supabase/server'
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -67,9 +70,15 @@ export async function signup(
   const data = {
     email: email as string,
     password: password as string,
+    options: {
+      data: {
+        assessment_done: false,
+      }
+    }
   }
 
   const { data: user, error } = await supabase.auth.signUp(data)
+  console.log(data)
   if (error) {
     return error.message
   }
@@ -100,4 +109,40 @@ export async function getCurrentUser() {
     return error.message
   }
   return user
+}
+
+export async function deleteProfile() {
+  const supabase = await createClient()
+  const supabaseAdmin = await createAdminClient()
+
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error) {
+    return error.message
+  }
+  const identities = await supabase.auth.getUserIdentities()
+  const idToDelete = identities.data?.identities.find(
+    identity => identity.id === user?.id
+  )
+  if (idToDelete) {
+    const { data: deleteData, error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(idToDelete.id)
+    if (deleteError) {
+      return deleteError.message
+    }
+    console.log(deleteData)
+  }
+  revalidatePath('/', 'layout')
+  redirect('/')
+}
+
+export async function assessmentDone() {
+  const supabase = await createClient()
+  await supabase.auth.updateUser({
+    data: { 
+      user_metadata: {
+        assessment_done: true,
+      },
+    },
+  })
+  revalidatePath('/dashboard')
+  redirect('/dashboard')
 }

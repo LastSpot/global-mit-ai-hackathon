@@ -7,7 +7,6 @@ import {
   Sparkles,
   User,
 } from "lucide-react"
-
 import {
   Avatar,
   AvatarFallback,
@@ -30,7 +29,7 @@ import {
 } from "@/components/ui/sidebar"
 import { signout } from "@/lib/actions"
 import { useUserStore } from "@/lib/stores/userStore"
-
+import Link from "next/link"
 export function NavUser({
   user,
 }: {
@@ -95,10 +94,12 @@ export function NavUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
-              </DropdownMenuItem>
+              <Link href="/profile">
+                <DropdownMenuItem>
+                  <BadgeCheck />
+                  Account
+                </DropdownMenuItem>
+              </Link>
               <DropdownMenuItem>
                 <CreditCard />
                 Billing

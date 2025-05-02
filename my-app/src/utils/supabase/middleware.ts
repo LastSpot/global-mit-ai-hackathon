@@ -40,6 +40,14 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user }
   } = await supabase.auth.getUser();
+  
+  // if (user &&
+  //   user.user_metadata.assessment_done === false
+  // ) {
+  //   const url = request.nextUrl.clone()
+  //   url.pathname = '/assessment'
+  //   return NextResponse.redirect(url)
+  // }
 
   if (user && 
     request.nextUrl.pathname.startsWith('/login') && 
