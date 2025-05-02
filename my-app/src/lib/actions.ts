@@ -67,29 +67,20 @@ export async function signup(
   if (password !== confirmPassword) {
     return 'Passwords do not match.';
   }
-  const data = {
-    email: email as string,
-    password: password as string,
+  
+  const { data: user, error } = await supabase.auth.signUp({
+    email: email,
+    password: password,
     options: {
       data: {
+        display_name: email?.split('@')[0] as string,
         assessment_done: false,
       }
     }
-  }
-
-  const { data: user, error } = await supabase.auth.signUp(data)
-  console.log(data)
+  })
   if (error) {
     return error.message
   }
-
-  await supabase.auth.updateUser({
-    data: { 
-      user_metadata: {
-        display_name: user.user?.email?.split('@')[0] as string,
-      },
-    },
-  })
 
   revalidatePath('/dashboard')
   redirect('/dashboard')
@@ -136,13 +127,32 @@ export async function deleteProfile() {
 
 export async function assessmentDone() {
   const supabase = await createClient()
-  await supabase.auth.updateUser({
+  
+  // First verify the user is authenticated with getUser()
+  const { data: { user }, error: getUserError } = await supabase.auth.getUser()
+  
+  if (getUserError) {
+    console.error("Authentication error:", getUserError)
+    return getUserError.message
+  }
+  
+  if (!user) {
+    console.error("No authenticated user found")
+    return "You must be logged in to complete the assessment"
+  }
+  
+  // Now update the user metadata
+  const { error: updateError } = await supabase.auth.updateUser({
     data: { 
-      user_metadata: {
-        assessment_done: true,
-      },
+      assessment_done: true,
     },
   })
+  
+  if (updateError) {
+    console.error("Update error:", updateError)
+    return updateError.message
+  }
+  
   revalidatePath('/dashboard')
   redirect('/dashboard')
 }

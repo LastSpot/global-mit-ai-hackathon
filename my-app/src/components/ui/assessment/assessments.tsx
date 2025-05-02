@@ -1,160 +1,164 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { assessmentDone } from "@/lib/actions"
-import { useRouter } from "next/navigation"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
 
-// Sample questions with multiple options to rank
+// Sample questions with multiple options
 const questions = [
     {
         id: 1,
-        question: "Rank these programming languages by your preference:",
+        question: "Which programming language do you prefer?",
         options: ["JavaScript", "Python", "Java", "C++"]
     },
     {
         id: 2,
-        question: "Rank these career goals by importance to you:",
+        question: "What is your most important career goal?",
         options: ["Work-life balance", "High salary", "Learning opportunities", "Career advancement"]
     },
     {
         id: 3,
-        question: "Rank these work environments by your preference:",
+        question: "What is your preferred work environment?",
         options: ["Remote work", "Hybrid work", "Office work", "Field work"]
     },
     {
         id: 4,
-        question: "Rank these skills by your proficiency:",
+        question: "What is your strongest skill?",
         options: ["Problem solving", "Communication", "Teamwork", "Technical skills"]
     },
     {
         id: 5,
-        question: "Rank these project types by your interest:",
+        question: "Which project type interests you the most?",
         options: ["Web development", "Mobile development", "Data analysis", "AI/Machine learning"]
     }
 ]
 
 export default function Assessments() {
-    const router = useRouter()
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
-    const [rankings, setRankings] = useState<Record<number, number[]>>({})
-    const [draggingIndex, setDraggingIndex] = useState<number | null>(null)
+    const [answers, setAnswers] = useState<Record<number, string>>({})
     const [errorMessage, setErrorMessage] = useState("")
     const [isSubmitting, setIsSubmitting] = useState(false)
     
-    const currentQuestion = questions[currentQuestionIndex]
+    const currentQuestion = useMemo(() => questions[currentQuestionIndex], [currentQuestionIndex])
     
-    // Initialize ranking for current question if not already set
-    if (!rankings[currentQuestion.id]) {
-        // Create default ranking based on original order
-        const initialRanking = currentQuestion.options.map((_, index) => index)
-        setRankings(prev => ({ ...prev, [currentQuestion.id]: initialRanking }))
-    }
-    
-    const handleDragStart = (index: number) => {
-        setDraggingIndex(index)
-    }
-    
-    const handleDragOver = (e: React.DragEvent, index: number) => {
-        e.preventDefault()
-        
-        if (draggingIndex === null) return
-        
-        // Get current rankings for this question
-        const currentRankings = [...rankings[currentQuestion.id]]
-        
-        // Don't do anything if dragging over the same item
-        if (draggingIndex === index) return
-        
-        // Reorder the items
-        const draggedItemValue = currentRankings[draggingIndex]
-        currentRankings.splice(draggingIndex, 1)
-        currentRankings.splice(index, 0, draggedItemValue)
-        
-        // Update the rankings
-        setRankings(prev => ({
+    const handleOptionSelect = useCallback((option: string) => {
+        console.log(`Selected option: ${option} for question ${currentQuestion.id}`)
+        setAnswers(prev => ({
             ...prev,
-            [currentQuestion.id]: currentRankings
+            [currentQuestion.id]: option
         }))
+        setErrorMessage("")
+    }, [currentQuestion.id])
+    
+    const nextQuestion = useCallback(() => {
+        if (!answers[currentQuestion.id]) {
+            setErrorMessage("Please select an option before continuing.")
+            return
+        }
         
-        setDraggingIndex(index)
-    }
-    
-    const handleDragEnd = () => {
-        setDraggingIndex(null)
-    }
-    
-    const nextQuestion = () => {
         if (currentQuestionIndex < questions.length - 1) {
             setCurrentQuestionIndex(prev => prev + 1)
             setErrorMessage("")
         }
-    }
+    }, [answers, currentQuestion.id, currentQuestionIndex])
     
-    const prevQuestion = () => {
+    const prevQuestion = useCallback(() => {
         if (currentQuestionIndex > 0) {
             setCurrentQuestionIndex(prev => prev - 1)
             setErrorMessage("")
         }
-    }
+    }, [currentQuestionIndex])
     
-    const handleSubmit = async () => {
-        // Check if all questions have rankings
-        const allQuestionsAnswered = questions.every(q => rankings[q.id] && rankings[q.id].length === q.options.length)
+    const handleSubmit = useCallback(async () => {
+        console.log("Starting submission process...")
         
-        if (!allQuestionsAnswered) {
+        // Check if current question is answered
+        if (!answers[currentQuestion.id]) {
+            console.log(`Current question ${currentQuestion.id} is not answered`)
+            setErrorMessage("Please select an option before submitting.")
+            return
+        }
+        
+        // Check if all questions have answers
+        const allAnswered = questions.every(q => answers[q.id])
+        console.log(`All questions answered: ${allAnswered}`)
+        console.log("Current answers:", answers)
+        
+        if (!allAnswered) {
+            const unanswered = questions.filter(q => !answers[q.id]).map(q => q.id)
+            console.log(`Unanswered questions: ${unanswered.join(', ')}`)
             setErrorMessage("Please answer all questions before submitting.")
             return
         }
         
         setIsSubmitting(true)
+        setErrorMessage("")
+        console.log("Submission in progress...")
         
         try {
-            // Convert rankings to a more readable format for submission
-            const formattedResults = questions.map(q => {
-                const questionRankings = rankings[q.id]
-                // Map each option index to its rank (1 being highest)
-                const result: Record<string, number> = {}
-                questionRankings.forEach((optionIndex, rank) => {
-                    result[q.options[optionIndex]] = rank + 1
-                })
-                
-                return {
-                    question: q.question,
-                    rankings: result
-                }
-            })
+            // Format results for submission - this could be saved to a database in the future
+            const formattedResults = questions.map(q => ({
+                question: q.question,
+                answer: answers[q.id]
+            }))
             
-            console.log("Assessment results:", formattedResults)
+            console.log("Formatted results:", formattedResults)
+            console.log("Calling assessmentDone server action...")
             
             // Call server action to mark assessment as done
-            await assessmentDone()
+            const result = await assessmentDone()
+            console.log("Server action result:", result)
+            
+            // If result is a string, it's an error message from the server action
+            if (typeof result === 'string') {
+                console.error("Server returned error:", result)
+                
+                // Handle specific authentication errors
+                if (result.toLowerCase().includes("auth") || 
+                    result.toLowerCase().includes("login") || 
+                    result.toLowerCase().includes("authenticated")) {
+                    setErrorMessage("Authentication error. Please log in again to complete the assessment.")
+                } else {
+                    setErrorMessage(result || "There was an error submitting your assessment. Please try again.")
+                }
+                
+                setIsSubmitting(false)
+                return
+            }
+            
+            // If we get here, the submission was successful
+            // The server action handles redirect, so we don't need to do anything else
+            console.log("Assessment submitted successfully")
         } catch (error) {
-            console.error("Error submitting assessment:", error)
-            setErrorMessage("There was an error submitting your assessment. Please try again.")
+            console.error("Error details:", error)
+            
+            // Display a more specific error message if possible
+            let errorMsg = "There was an error submitting your assessment. Please try again."
+            if (error instanceof Error) {
+                console.error("Error name:", error.name)
+                console.error("Error message:", error.message)
+                
+                // Provide more specific error messages for common errors
+                if (error.message.includes("network") || error.message.includes("fetch")) {
+                    errorMsg = "Network error. Please check your connection and try again."
+                } else if (error.message.includes("auth") || error.message.includes("unauthorized")) {
+                    errorMsg = "Authentication error. Please log in again and try submitting."
+                }
+            }
+            
+            setErrorMessage(errorMsg)
             setIsSubmitting(false)
+        } finally {
+            console.log("Submission process completed")
         }
-    }
+    }, [answers, currentQuestion.id])
     
-    // Create display items for current question with drag-and-drop ranking
-    const rankingItems = rankings[currentQuestion.id]?.map((optionIndex, rank) => (
-        <div 
-            key={optionIndex}
-            draggable
-            onDragStart={() => handleDragStart(rank)}
-            onDragOver={(e) => handleDragOver(e, rank)}
-            onDragEnd={handleDragEnd}
-            className={`flex items-center gap-3 p-3 rounded-md cursor-move mb-2 border ${
-                draggingIndex === rank ? "bg-muted border-dashed" : "bg-background"
-            }`}
-        >
-            <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-medium">
-                {rank + 1}
-            </div>
-            <div className="flex-grow">{currentQuestion.options[optionIndex]}</div>
-        </div>
-    ))
+    const progress = useMemo(() => {
+        return `Question ${currentQuestionIndex + 1} of ${questions.length}`
+    }, [currentQuestionIndex])
     
     return (
         <Card className="w-full max-w-2xl mx-auto">
@@ -162,7 +166,7 @@ export default function Assessments() {
                 <CardTitle>Assessment</CardTitle>
                 <CardDescription>
                     Please answer all questions to proceed to the dashboard.
-                    Rank the options by dragging and dropping them in order of preference (1 = highest).
+                    Select one option for each question.
                 </CardDescription>
             </CardHeader>
             
@@ -170,7 +174,7 @@ export default function Assessments() {
                 <div className="space-y-6">
                     <div className="flex items-center justify-between">
                         <h3 className="text-sm font-medium text-muted-foreground">
-                            Question {currentQuestionIndex + 1} of {questions.length}
+                            {progress}
                         </h3>
                     </div>
                     
@@ -178,9 +182,20 @@ export default function Assessments() {
                         {currentQuestion.question}
                     </div>
                     
-                    <div className="mt-4">
-                        {rankingItems}
-                    </div>
+                    <RadioGroup 
+                        value={answers[currentQuestion.id] || ""}
+                        onValueChange={handleOptionSelect}
+                        className="space-y-3"
+                    >
+                        {currentQuestion.options.map((option) => (
+                            <div key={option} className="flex items-center space-x-2 rounded-md border p-3">
+                                <RadioGroupItem value={option} id={option} />
+                                <Label htmlFor={option} className="flex-grow cursor-pointer">
+                                    {option}
+                                </Label>
+                            </div>
+                        ))}
+                    </RadioGroup>
                     
                     {errorMessage && (
                         <div className="mt-4 text-sm text-red-500">
