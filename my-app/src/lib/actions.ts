@@ -45,7 +45,7 @@ export async function login(
     password: password as string,
   }
 
-  const { data: user, error } = await supabase.auth.signInWithPassword(data)
+  const { error } = await supabase.auth.signInWithPassword(data)
   if (error) {
     return error.message
   }

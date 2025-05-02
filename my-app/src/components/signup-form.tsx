@@ -9,10 +9,7 @@ import { useActionState } from 'react';
 import { signup } from '@/lib/actions';
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline"
 
-export function SignupForm({
-  className,
-  ...props
-}: React.ComponentProps<"form">) {
+export function SignupForm() {
   const [errorMessage, formAction, isPending] = useActionState(
     signup,
     undefined,

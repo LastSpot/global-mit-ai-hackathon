@@ -417,7 +417,7 @@ export default function Assessments() {
         
         // Get all traits that have the maximum count (could be multiple in case of ties)
         return Object.entries(traitCounts)
-            .filter(([_, count]) => count === maxCount)
+            .filter(([, count]) => count === maxCount)
             .map(([trait]) => trait)
     }, [calculateTraits])
     

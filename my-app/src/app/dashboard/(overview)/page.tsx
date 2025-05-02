@@ -1,12 +1,10 @@
 import Link from "next/link";
 import { InteractiveHoverButton } from "@/components/magicui/interactive-hover-button";
-import { SparklesText } from "@/components/magicui/sparkles-text";
 
 export default function Page() {
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
       <div className="flex flex-row justify-between px-3">
-        {/* <SparklesText className="text-lg font-semibold text-normal text-center items-center justify-center">Dashboard</SparklesText> */}
         <h2 className="text-lg font-semibold text-normal text-center items-center justify-center">Dashboard</h2>
         <Link href="/dashboard/whiteboard/create">
           <InteractiveHoverButton className="w-fit">Create</InteractiveHoverButton>

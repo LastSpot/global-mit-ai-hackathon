@@ -51,7 +51,7 @@ export function BreadcrumbHeader() {
                 <BreadcrumbEllipsis />
                 <BreadcrumbSeparator />
                 {/* Last two */}
-                {[pathParts.length - 2, pathParts.length - 1].map((index, arrIdx) => (
+                {[pathParts.length - 2, pathParts.length - 1].map((index) => (
                   <React.Fragment key={index}>
                     <BreadcrumbItem>
                       {index !== pathParts.length - 1 ? (
