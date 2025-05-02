@@ -163,7 +163,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const { data: { session } } = await supabase.auth.getSession();
       setUser({
         id: session?.user?.id || '',
-        name: session?.user?.user_metadata.user_metadata.display_name || '',
+        name: session?.user?.user_metadata.display_name || '',
         email: session?.user?.email || '',
         avatar: session?.user?.user_metadata?.avatar_url || '',
       });

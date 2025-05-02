@@ -40,8 +40,6 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user }
   } = await supabase.auth.getUser();
-
-  console.log(user?.user_metadata.assessment_done)
   
   if (user &&
     user.user_metadata.assessment_done === false &&

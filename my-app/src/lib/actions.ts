@@ -68,7 +68,7 @@ export async function signup(
     return 'Passwords do not match.';
   }
   
-  const { data: user, error } = await supabase.auth.signUp({
+  const { error } = await supabase.auth.signUp({
     email: email,
     password: password,
     options: {
@@ -125,7 +125,7 @@ export async function deleteProfile() {
   redirect('/')
 }
 
-export async function assessmentDone() {
+export async function assessmentDone(dominantTraits: string[] = []) {
   const supabase = await createClient()
   
   // First verify the user is authenticated with getUser()
@@ -140,11 +140,14 @@ export async function assessmentDone() {
     console.error("No authenticated user found")
     return "You must be logged in to complete the assessment"
   }
+
+  console.log("Updating user with dominant traits:", dominantTraits)
   
   // Now update the user metadata
   const { error: updateError } = await supabase.auth.updateUser({
     data: { 
       assessment_done: true,
+      dominant_traits: dominantTraits,
     },
   })
   
